@@ -1,0 +1,104 @@
+# ═══════════════════════════════════════════════════════════════════
+# MGU-K Motor Parameters — Ferrari F1 Engineering Academy 2026
+# ═══════════════════════════════════════════════════════════════════
+# All values are assumed based on published literature for
+# high-performance automotive PMSMs in the 300–400 kW class.
+# Sources cited inline where applicable.
+
+# ── Electrical Parameters ──────────────────────────────────────────
+electrical:
+  R_s: 0.002            # [Ω] stator resistance per phase
+  psi_m: 0.08           # [Wb] magnet flux linkage
+  pole_pairs: 4         # [-] number of pole pairs
+  P_peak: 350000        # [W] peak MGU-K power (2026 regs)
+  P_continuous: 120000  # [W] continuous MGU-K power
+
+# ── Steinmetz Iron-Loss Coefficients (M330-35A silicon steel) ─────
+# P_iron = k_h·f·B_pk^α + k_e·(f·B_pk)²
+# NOTE: These are TOTAL-MOTOR coefficients (not per-kg specific).
+# Calibrated for ~6 kg iron core mass to give realistic efficiency:
+#   ~95% at peak power (350 kW, 340 km/h) → P_iron ≈ 10 kW
+#   Derived from M330-35A specific loss of 3.3 W/kg at 50 Hz, 1.5 T.
+steinmetz:
+  k_h: 2.5              # hysteresis coefficient [total motor]
+  k_e: 0.004            # eddy-current coefficient [total motor]
+  alpha: 1.8            # Steinmetz exponent
+
+# ── Thermal Capacitances ──────────────────────────────────────────
+# 5-node lumped thermal network
+thermal_capacitance:     # [J/K]
+  C_winding: 800
+  C_stator: 2000
+  C_magnet: 400
+  C_housing: 5000
+  C_coolant: 3000
+
+# ── Thermal Resistances ──────────────────────────────────────────
+thermal_resistance:      # [K/W]
+  R_winding_stator: 0.02
+  R_stator_magnet: 0.05
+  R_stator_housing: 0.01
+  R_housing_coolant: 0.005
+
+# ── Thermal Constraints ──────────────────────────────────────────
+thermal_limits:
+  T_magnet_max: 140      # [°C] NdFeB demagnetisation limit
+  T_coolant_inlet: 65    # [°C] coolant inlet temperature
+
+# ── Vehicle Dynamics (point-mass model) ───────────────────────────
+vehicle:
+  mass: 800              # [kg] car + driver (2026 regs)
+  CdA: 0.7              # [m²] drag coefficient × frontal area (Monza low-drag)
+  rho: 1.225             # [kg/m³] air density at sea level
+
+# ── Energy Constraints (2026 regulations) ─────────────────────────
+energy:
+  max_energy_per_lap: 4000000   # [J] = 4 MJ
+  SOC_min: 0.20                  # [-] minimum state of charge
+  SOC_max: 0.95                  # [-] maximum state of charge
+  SOC_ref: 0.50                  # [-] reference SOC for cost function
+  battery_capacity: 4000000      # [J] ≈ 1.1 kWh nominal usable
+
+# ── Magnetic Saturation Parameters ───────────────────────────────
+# Iron saturation at high current reduces effective flux linkage ψ_m.
+# Model: ψ_m_eff = ψ_m × (1 − k_sat × (I_s / I_sat)²)
+# This forces more current for the same torque → higher copper losses.
+# Calibrated for a 300–400 kW PMSM: ~8% flux reduction at I_sat = 400 A.
+saturation:
+  k_sat: 0.08            # [-] flux reduction coefficient
+  I_sat: 400.0           # [A] saturation reference current
+
+# ── MPC Parameters ────────────────────────────────────────────────
+mpc:
+  dt: 0.05               # [s] time step
+  N_horizon: 40          # [-] legacy default horizon (overridden below)
+  N_horizon_short: 60    # [-] standard sections horizon (= 3 s)
+  N_horizon_long: 120    # [-] heavy braking zones horizon (= 6 s)
+  epsilon: 1.0e-6        # [-] finite-difference perturbation size
+
+# ── Cost Function Weights ─────────────────────────────────────────
+# Minimise: Σ [ deployment_reward + w_u·P_e² + w_soc·(SOC - SOC_ref)² ]
+#
+# Deployment reward (new, replacing the old speed-state term):
+#   reward_k = -w_v × (v_ref_k / V_MAX) × (u_k / P_peak)
+#   V_MAX = 100 m/s, P_peak = 350 kW
+#   At v=80 m/s, u=350 kW: reward = -w_v × 0.8 × 1.0 = -4.0 (per step)
+#
+# Tuning rationale:
+#   Deployment reward dominates → forces aggressive deploy on straights.
+#   Hard SOC constraints (20–95%) govern energy limits (not w_soc).
+#   w_soc provides a soft pull back toward 50% to ensure regen happens
+#   after heavy deployment, without overriding the hard constraint logic.
+#   w_u is tiny — only suppresses high-frequency switching noise.
+#   w_thermal_barrier (in code: 50) stops magnet exceeding 140°C.
+cost_weights:
+  w_v: 5.0               # deployment reward weight (dominant — maximise use)
+  w_u: 1.0e-12           # control effort penalty (smooth switching only)
+  w_soc: 1.0             # SOC tracking (relaxed — hard constraints govern range)
+
+# ── Track Configuration ──────────────────────────────────────────
+track:
+  circuit: "Monza"
+  year: 2025
+  session: "R"           # Race session
+  cache_dir: "data/cache"
