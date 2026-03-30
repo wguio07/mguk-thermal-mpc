@@ -1,9 +1,22 @@
 # MGU-K Thermal-Constrained ERS Deployment Optimiser
 
-**Ferrari F1 Engineering Academy 2026 — Wolfgang Guio**
+This project builds a coupled thermal-electrical Model Predictive Controller (MPC) that optimises MGU-K deployment strategy over a full Monza race lap while simultaneously managing permanent magnet temperatures to prevent demagnetisation. The central engineering insight is that under the 2026 F1 regulations — which triple MGU-K peak power to 350 kW and eliminate the MGU-H — deployment strategy and thermal management are the same problem and cannot be optimised independently.
 
-A coupled thermal-electrical Model Predictive Controller (MPC) that simultaneously optimises MGU-K deployment strategy and manages permanent magnet demagnetisation risk over a real F1 race lap.
+---
 
+## Results — Monza 2025 Lap (84 s)
+
+| Metric | Value |
+|--------|-------|
+| T_magnet peak (equilibrium, lap 6–10): |116.1°C — 23.9°C margin vs 140°C demagnetisation limit
+ |
+| Thermal equilibrium reached: | 100 % |
+| Mean solve time |  Lap 5 (1.6°C rise from lap 5 to lap 10 — effectively stable) |
+| Solver performance: | 12 ms/step average, 100% QP solve rate, 1680 steps per lap |
+| Fixed-strategy baseline (no MPC): | T_magnet reaches 131.6°C — only 8.4°C from demagnetisation, demonstrating the risk of naive deployment |
+| Energy balance: | 1.71 MJ deployed / 1.71 MJ regenerated per lap — energy-neutral steady state |
+
+Without the quadratic thermal barrier penalty (tuned 10 °C below T_max), the controller drove magnet temperature to 180 °C — a demagnetisation failure. With the barrier, it holds safely within the safe zone while maximising deployment.
 ---
 
 ## Motivation
@@ -98,21 +111,6 @@ Speed reward on straights, control effort penalty, SOC tracking to preserve ener
 | Peak power | ±350 kW |
 | Continuous power | ±120 kW (time-averaged) |
 | Total lap energy | ≤ 4 MJ (2026 regulations) |
-
----
-
-## Results — Monza 2025 Lap (84 s)
-
-| Metric | Value |
-|--------|-------|
-| MPC iterations | 1,680 |
-| Solver convergence | 100 % |
-| Mean solve time | 12 ms/step (warm-start) |
-| Peak magnet temperature | **134.4 °C** |
-| Safety margin vs. 140 °C limit | **5.6 °C** |
-| All state/control constraints | ✅ Satisfied |
-
-Without the quadratic thermal barrier penalty (tuned 10 °C below T_max), the controller drove magnet temperature to 180 °C — a demagnetisation failure. With the barrier, it holds safely within the safe zone while maximising deployment.
 
 ---
 
