@@ -29,7 +29,7 @@ A segment-aware fixed-strategy controller running at the 2026 regulation peak po
 
 | Metric | Fixed Strategy (350/350 kW, segment-aware) | **MPC Controller** |
 |--------|---------------|-------------------|
-| T_magnet peak (single lap) | 131.6 °C ⚠️ | **116.1 °C ✅** |
+| T_magnet peak (multi-lap) | 131.6 °C ⚠️ | **116.1 °C ✅** |
 | Margin vs. 140 °C limit | 8.4 °C | **23.9 °C** |
 | Thermal equilibrium | Not reached | **Lap 6** (stable) |
 | Solver convergence | — | **100 %** (1,680/1,680 solves) |
@@ -63,7 +63,7 @@ The baseline below uses the **2026 regulation peak power in both directions** �
 ![Fixed Strategy Thermal](plots/fixed_strategy_thermal.png)
 *Segment-aware fixed strategy at regulation peak power (350/350 kW, no MPC): stator iron exceeds 140 °C, magnets reach 131.6 °C — 8.4 °C from irreversible demagnetisation. Red dashed line = demagnetisation limit.*
 
-A reactive thermal deration system would throttle power *after* the temperature spike. An MPC sees **2 seconds into the future**, anticipates thermal run-up, and pre-emptively reduces deployment in the final phase of a straight — sacrificing a small fraction of speed to preserve the constraint margin across the entire stint.
+A reactive thermal deration system would throttle power *after* the temperature spike. An MPC sees **3 seconds or 6 seconds in braking zones into the future**, anticipates thermal run-up, and pre-emptively reduces deployment in the final phase of a straight — sacrificing a small fraction of speed to preserve the constraint margin across the entire stint.
 
 ---
 
@@ -312,20 +312,5 @@ Designed against the [2026 FIA F1 Power Unit Technical Regulations](https://www.
 
 <div align="center">
 
-## Interview Narrative
-
-*"I built a coupled thermal-electrical MPC that optimises MGU-K deployment over a real Monza race lap while simultaneously managing motor component temperatures. The controller uses OSQP with numerical Jacobians recomputed at each 0.05-second step — a Real-Time Iteration approach — and enforces a hard demagnetisation constraint on the permanent magnets.*
-
-*The central insight is that deployment strategy and thermal management are the same problem: you cannot optimise one without modelling the other. The 2026 regulations make this explicit — without the MGU-H, the MGU-K is the primary electrical device, and at 350 kW it generates enough heat to permanently demagnetise the rotor magnets if not managed proactively.*
-
-*In the 10-lap thermal soak validation, the controller reaches a stable equilibrium at 116.1 °C — 23.9 °C below the demagnetisation limit — while maintaining an energy-neutral SOC balance of 63.4 % lap to lap. A naive fixed strategy without MPC reached 131.6 °C within a single lap."*
-
-— Wolfgang Guio, Ferrari F1 Engineering Academy 2026
-
----
-
-**Wolfgang Guio** · MSc Motorsport Engineering (Distinction), Oxford Brookes University
-
-[GitHub](https://github.com/wguio07) · [LinkedIn](https://www.linkedin.com/in/wolfgangguio)
 
 </div>
