@@ -285,7 +285,7 @@ Outputs saved to `plots/`:
 
 ## Key Assumptions & Limitations
 
-Motor parameters are documented engineering estimates from published literature for 300–400 kW class automotive PMSMs — not fitted to Ferrari proprietary hardware. All assumptions are explicitly sourced in `params/motor_params.yaml`.
+Motor parameters are documented engineering estimates from published literature for 300–400 kW class automotive PMSMs. All assumptions are explicitly sourced in `params/motor_params.yaml`.
 
 | Assumption | Impact if wrong | Sensitivity |
 |-----------|----------------|-------------|
