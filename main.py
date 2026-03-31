@@ -580,8 +580,8 @@ def simulate_and_plot_fixed_strategy(track: "TrackData",
                                      motor: "MotorParams",
                                      tp: "ThermalParams",
                                      plots_dir: Path,
-                                     P_deploy_kW: float = 200.0,
-                                     P_regen_kW: float = 80.0):
+                                     P_deploy_kW: float = 350.0,
+                                     P_regen_kW: float = 350.0):
     """Simulate 1 lap with a FIXED deployment strategy (no MPC) and plot
     all 5 thermal node temperatures vs time.
 
@@ -590,9 +590,14 @@ def simulate_and_plot_fixed_strategy(track: "TrackData",
     140°C demagnetisation limit — exactly why coupled thermal-electrical
     MPC is required.
 
-    Strategy:
-      - Straight segments  → deploy  +P_deploy_kW kW
-      - Corner  segments   → regen   −P_regen_kW  kW (braking energy recovery)
+    Strategy (segment-aware, physically motivated):
+      - Straight segments  → deploy  +P_deploy_kW kW  (driver demands full power)
+      - Corner  segments   → regen   −P_regen_kW  kW  (maximum braking energy recovery)
+
+    Default values use the 2026 regulation peak power (350 kW) in both
+    directions — the most physically defensible "no thermal management"
+    baseline, mimicking a driver who simply asks for full power everywhere
+    with no knowledge of the current thermal state.
 
     Parameters
     ----------
@@ -600,8 +605,8 @@ def simulate_and_plot_fixed_strategy(track: "TrackData",
     motor       : MotorParams
     tp          : ThermalParams
     plots_dir   : Path  — where to save the figure
-    P_deploy_kW : peak deployment power [kW]
-    P_regen_kW  : peak regen power [kW] (sign convention: positive value)
+    P_deploy_kW : peak deployment power [kW]  (default: 350 kW = 2026 reg limit)
+    P_regen_kW  : peak regen power [kW] (sign convention: positive value)  (default: 350 kW)
     """
     import matplotlib.pyplot as plt
     from src.thermal_network import ThermalState, step_euler, N_THERMAL, IDX_MAGNET
@@ -620,7 +625,8 @@ def simulate_and_plot_fixed_strategy(track: "TrackData",
         P_e  = P_deploy_kW * 1e3 if seg == "straight" else -P_regen_kW * 1e3
 
         # Analytical losses (fixed B_pk=1.5), no speed-enhanced cooling —
-        # conservative baseline to reveal worst-case naive strategy risk.
+        # conservative baseline: driver commands full regulation power
+        # everywhere with zero knowledge of the current thermal state.
         P_cu_k, P_fe_k, _ = _losses(
             np.array([P_e]), np.array([v_k]), motor)
         state = step_euler(state, float(P_cu_k[0]), float(P_fe_k[0]),
@@ -795,11 +801,15 @@ def main():
     plots_dir.mkdir(parents=True, exist_ok=True)
 
     # ── Step 1: Fixed-strategy motivating plot ─────────────────────
-    # Shows why MPC is needed: naive 200 kW / 80 kW deployment drives
-    # temperatures dangerously close to the demagnetisation limit.
-    print("\n[1/4] Simulating fixed-strategy lap (200 kW deploy / 80 kW regen)...")
+    # Segment-aware baseline: full 350 kW on straights, full 350 kW regen
+    # in corners/braking zones — the physically defensible "no thermal
+    # management" scenario. A driver who simply commands maximum available
+    # power everywhere, with no knowledge of the current thermal state.
+    # This is the most realistic comparison for the MPC: it shows that even
+    # a rational, regulation-limit strategy fails without active thermal control.
+    print("\n[1/4] Simulating fixed-strategy lap (350 kW deploy / 350 kW regen)...")
     simulate_and_plot_fixed_strategy(track, motor, tp, plots_dir,
-                                     P_deploy_kW=200.0, P_regen_kW=80.0)
+                                     P_deploy_kW=350.0, P_regen_kW=350.0)
 
     # ── Step 2: 10-lap MPC simulation ─────────────────────────────
     # SOC oscillates between 80% and 20% across the stint.

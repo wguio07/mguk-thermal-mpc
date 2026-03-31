@@ -21,15 +21,15 @@
 
 Under the 2026 F1 regulations — which eliminate the MGU-H and **triple MGU-K peak power to 350 kW** — the electrical system becomes half the powertrain. At that power density, aggressive deployment on Monza's long straights generates enough heat to permanently demagnetise the rotor magnets above **140 °C**. Permanent magnet demagnetisation is irreversible. There is no recovering mid-race.
 
-A naive fixed-strategy controller (200 kW deploy / 80 kW regen) reaches **131.6 °C** — leaving only **8.4 °C** from catastrophic failure — within a single lap. The MPC presented here solves this by treating the thermal state as a first-class constraint, not an afterthought.
+A segment-aware fixed-strategy controller running at the 2026 regulation peak power (350 kW deploy on straights / 350 kW regen in braking zones) — the most physically defensible "no thermal management" baseline — reaches **131.6 °C** within a single lap, leaving only **8.4 °C** from irreversible demagnetisation. The MPC presented here solves this by treating the thermal state as a first-class constraint, not an afterthought.
 
 ---
 
 ## Key Results — 10-Lap Thermal Soak
 
-| Metric | Fixed Strategy | **MPC Controller** |
+| Metric | Fixed Strategy (350/350 kW, segment-aware) | **MPC Controller** |
 |--------|---------------|-------------------|
-| T_magnet peak (multi-lap) | 131.6 °C ⚠️ | **116.1 °C ✅** |
+| T_magnet peak (single lap) | 131.6 °C ⚠️ | **116.1 °C ✅** |
 | Margin vs. 140 °C limit | 8.4 °C | **23.9 °C** |
 | Thermal equilibrium | Not reached | **Lap 6** (stable) |
 | Solver convergence | — | **100 %** (1,680/1,680 solves) |
@@ -58,10 +58,10 @@ Without the MGU-H's continuous heat regulation role, the responsibility for ther
 
 ## Why MPC Is Required
 
-The fixed strategy below illustrates the failure mode. Stator iron reaches **143.6 °C** and magnets **131.6 °C** on a simple constant-power open-loop strategy:
+The baseline below uses the **2026 regulation peak power in both directions** — 350 kW deployment on straights, 350 kW regen in braking zones. This is the most physically defensible "no thermal management" scenario: a driver who simply commands maximum available power everywhere with no knowledge of the current thermal state. Stator iron reaches **143.6 °C** and magnets **131.6 °C** within a single lap:
 
 ![Fixed Strategy Thermal](plots/fixed_strategy_thermal.png)
-*Fixed-strategy (no MPC): Stator iron exceeds 140 °C, magnets reach 131.6 °C — 8.4 °C from irreversible demagnetisation. Red dashed line = demagnetisation limit.*
+*Segment-aware fixed strategy at regulation peak power (350/350 kW, no MPC): stator iron exceeds 140 °C, magnets reach 131.6 °C — 8.4 °C from irreversible demagnetisation. Red dashed line = demagnetisation limit.*
 
 A reactive thermal deration system would throttle power *after* the temperature spike. An MPC sees **2 seconds into the future**, anticipates thermal run-up, and pre-emptively reduces deployment in the final phase of a straight — sacrificing a small fraction of speed to preserve the constraint margin across the entire stint.
 
