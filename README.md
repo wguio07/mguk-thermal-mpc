@@ -2,10 +2,8 @@
 
 # MGU-K Thermal-Constrained ERS Deployment Optimiser
 
-### Ferrari F1 Engineering Academy 2026 — Wolfgang Guio
-
 ![Python](https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white)
-![Solver](https://img.shields.io/badge/Solver-OSQP-FF6B35)
+![Solver](https://img.shields.io/badge/Solver-OSQP-FF6B35.svg)
 ![Regulation](https://img.shields.io/badge/2026%20F1%20Regs-350%20kW%20MGU--K-DC0000)
 ![Status](https://img.shields.io/badge/Status-Complete-00A550)
 
