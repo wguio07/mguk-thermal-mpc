@@ -29,7 +29,7 @@ A segment-aware fixed-strategy controller running at the 2026 regulation peak po
 
 | Metric | Fixed Strategy (350/350 kW, segment-aware) | **MPC Controller** |
 |--------|---------------|-------------------|
-| T_magnet peak (multi-lap) | 131.6 °C ⚠️ | **116.1 °C ✅** |
+| T_magnet peak (multi-lap) | 131.6 °C  | **116.1 °C ** |
 | Margin vs. 140 °C limit | 8.4 °C | **23.9 °C** |
 | Thermal equilibrium | Not reached | **Lap 6** (stable) |
 | Solver convergence | — | **100 %** (1,680/1,680 solves) |
